@@ -1,0 +1,13 @@
+name: book_recommender_env
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3.10
+  - pandas
+  - numpy
+  - scikit-learn
+  - streamlit
+  - pip
+  - pip:
+      - llama-cpp-python
