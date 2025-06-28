@@ -1,6 +1,14 @@
 import pandas as pd
 
 def load_filtered_data():
+    """
+    Load and preprocess the Book-Crossing dataset by merging ratings with book titles,
+    and filtering out inactive users and unpopular books.
+
+    Returns:
+        pd.DataFrame: Filtered DataFrame containing columns: user_id, isbn, rating, book_title,
+                      with only users who rated more than 5 books and books rated more than 10 times.
+    """
     ratings = pd.read_csv("data/BX-Book-Ratings.csv", sep=";", encoding="ISO-8859-1")
     books = pd.read_csv("data/BX-Books.csv", sep=";", encoding="ISO-8859-1", on_bad_lines='skip', low_memory=False)
 
@@ -15,3 +23,4 @@ def load_filtered_data():
     filtered = merged[(merged['user_id'].isin(active_users)) & (merged['book_title'].isin(popular_books))]
 
     return filtered
+
