@@ -1,37 +1,42 @@
+"""Module for building similarity model and generating recommendations."""
+
 import pandas as pd
 from sklearn.metrics.pairwise import cosine_similarity
 
+
 def build_model(filtered_df):
     """
-    Build a book-user pivot table and compute cosine similarity between books.
+    Build pivot table and cosine similarity matrix.
 
     Args:
-        filtered_df (pd.DataFrame): Filtered DataFrame containing user_id, book_title, and rating.
+        filtered_df (pd.DataFrame): Filtered dataset.
 
     Returns:
-        tuple:
-            pd.DataFrame: Pivot table of book titles vs user ratings.
-            pd.DataFrame: Cosine similarity matrix between books.
+        tuple: (pivot table, similarity matrix)
     """
-    book_pivot = filtered_df.pivot_table(index='book_title', columns='user_id', values='rating').fillna(0)
+    book_pivot = filtered_df.pivot_table(
+        index="book_title", columns="user_id", values="rating"
+    ).fillna(0)
     book_pivot.index = book_pivot.index.str.strip()
     similarity = cosine_similarity(book_pivot)
-    similarity_df = pd.DataFrame(similarity, index=book_pivot.index, columns=book_pivot.index)
+    similarity_df = pd.DataFrame(
+        similarity, index=book_pivot.index, columns=book_pivot.index
+    )
     return book_pivot, similarity_df
 
 
 def predict_ratings(user_id, book_pivot, similarity_df, top_n=5):
     """
-    Predict top N book recommendations for a given user using item-item collaborative filtering.
+    Predict top-N recommended books for a given user.
 
     Args:
-        user_id (str or int): The ID of the user to generate recommendations for.
-        book_pivot (pd.DataFrame): Book-user rating pivot table.
-        similarity_df (pd.DataFrame): Cosine similarity matrix between books.
-        top_n (int, optional): Number of top recommendations to return. Defaults to 5.
+        user_id (str): The user ID.
+        book_pivot (pd.DataFrame): Book-user rating matrix.
+        similarity_df (pd.DataFrame): Book-book similarity matrix.
+        top_n (int): Number of recommendations.
 
     Returns:
-        list: List of top N recommended book titles for the user, or an error message if user not found.
+        list: List of book titles.
     """
     if user_id not in book_pivot.columns:
         return ["User not found."]
@@ -46,8 +51,14 @@ def predict_ratings(user_id, book_pivot, similarity_df, top_n=5):
         mask = user_ratings > 0
         numerator = (sim_scores[mask] * user_ratings[mask]).sum()
         denominator = sim_scores[mask].abs().sum()
-        predicted_ratings[book] = numerator / denominator if denominator != 0 else 0
+        predicted_ratings[book] = (
+            numerator / denominator if denominator != 0 else 0
+        )
 
     rated_books = book_pivot[user_id][book_pivot[user_id] > 0].index
     predicted_ratings = predicted_ratings.drop(rated_books)
-    return predicted_ratings.sort_values(ascending=False).head(top_n).index.tolist()
+    return (
+        predicted_ratings.sort_values(ascending=False)
+        .head(top_n)
+        .index.tolist()
+    )
